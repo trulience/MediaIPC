@@ -82,6 +82,12 @@ MediaProducer::~MediaProducer() {
 	this->stop();
 }
 
+static inline uint64_t RtcTimeMs()
+{
+	using namespace std::chrono;
+	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+
 void MediaProducer::submitVideoFrame(void* buffer, uint64_t length)
 {
 	//Determine which buffer to use
@@ -104,13 +110,8 @@ void MediaProducer::submitVideoFrame(void* buffer, uint64_t length)
 	{
 		MutexLock lock(*this->videoMutex->mutex);
 		this->controlBlock->lastBuffer = bufToUse;
+		this->controlBlock->mtime = RtcTimeMs();
 	}
-}
-
-static inline uint64_t RtcTimeMs()
-{
-	using namespace std::chrono;
-	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }
 
 void MediaProducer::submitVideoFrame(void* buffer, uint64_t length, uint32_t width, uint32_t height)
@@ -119,7 +120,6 @@ void MediaProducer::submitVideoFrame(void* buffer, uint64_t length, uint32_t wid
 		MutexLock lock(*this->statusMutex->mutex);
 		this->controlBlock->width = width;
 		this->controlBlock->height = height;
-		this->controlBlock->mtime = RtcTimeMs();
 		submitVideoFrame(buffer, length);
 	}
 }

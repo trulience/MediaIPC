@@ -10,7 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if (MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W2 /MD")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -fPIC")
 endif()
 
 # If we are using the Conan CMake generator, include the generated file
@@ -48,11 +48,19 @@ if (BUILD_EXAMPLES)
 	# Build the examples that only require the Boost headers
 	set(EXAMPLES_COMMON examples/common/common.cpp)
 	add_executable(procedural_producer examples/producers/procedural_producer.cpp ${EXAMPLES_COMMON})
+	add_executable(reconnect examples/producers/reconnect.cpp ${EXAMPLES_COMMON})
 	add_executable(ffmpeg_streaming_consumer examples/consumers/ffmpeg_streaming_consumer.cpp ${EXAMPLES_COMMON})
 	add_executable(rawdump_consumer examples/consumers/rawdump_consumer.cpp ${EXAMPLES_COMMON})
 	target_link_libraries(procedural_producer MediaIPC ${LIBRARIES})
+	target_link_libraries(reconnect MediaIPC ${LIBRARIES})
 	target_link_libraries(ffmpeg_streaming_consumer MediaIPC ${LIBRARIES} ${Boost_LIBRARIES})
 	target_link_libraries(rawdump_consumer MediaIPC ${LIBRARIES})
+	
+	add_executable(resolution examples/producers/resolution.cpp ${EXAMPLES_COMMON})
+	target_link_libraries(resolution MediaIPC ${LIBRARIES})
+
+	add_executable(logconsumer examples/consumers/logconsumer.cpp ${EXAMPLES_COMMON})
+	target_link_libraries(logconsumer MediaIPC ${LIBRARIES})
 	
 	# Determine if we have Boost.System
 	find_package(Boost 1.64 COMPONENTS system)
