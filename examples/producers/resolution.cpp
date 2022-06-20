@@ -9,6 +9,8 @@
 #include <stdexcept>
 #include <stdint.h>
 #include <thread>
+#include <string>
+#include <sstream>
 using std::cin;
 using std::cout;
 using std::endl;
@@ -22,17 +24,27 @@ double sinewave(uint64_t timestep, double frequency, double sampleRate) {
 	return std::sin(2.0 * M_PI * (double)timestep * frequency / sampleRate);
 }
 
+
+struct { int x, y; } rezs[4] = {
+ 	{640,480},
+ 	{854,729},
+ 	{1024,768},
+ 	{1280,1024},
+ };
+
+int ind = 3;
+
 int main (int argc, char* argv[])
 {
 	try
 	{
 		//If the user supplied a prefix string, use it instead of our default
 		std::string prefix = ((argc > 1) ? argv[1] : "TestPrefix");
-		
-		//Populate the control block to send to the consumer
+	
 		MediaIPC::ControlBlock cb;
-		cb.width = 1920;
-		cb.height = 1080;
+
+		cb.width = rezs[ind].x;
+		cb.height = rezs[ind].y;
 		cb.frameRate = 30;
 		cb.videoFormat = MediaIPC::VideoFormat::RGB;
 		cb.channels = 2;
@@ -45,11 +57,13 @@ int main (int argc, char* argv[])
 		
 		//Allow the user to terminate the stream
 		bool shouldExit = false;
-		std::thread inputThread([&shouldExit]()
+		std::thread inputThread([&]()
 		{
-			cout << "Enter any text to exit..." << endl;
+		    while (1 ) {
+			cout << "Enter to change resolution" << endl;
 			cin.ignore();
-			shouldExit = true;
+		    	ind = (ind + 1 ) % 4;
+		    }
 		});
 		
 		//Determine our sampling frequency
@@ -70,6 +84,9 @@ int main (int argc, char* argv[])
 			//Determine the time point for the next sampling iteration
 			lastSample = nextSample;
 			nextSample = lastSample + samplingFrequency;
+
+		cb.width = rezs[ind].x;
+		cb.height = rezs[ind].y;
 			
 			//Generate our video framebuffer
 			uint64_t bpp = MediaIPC::FormatDetails::bytesPerPixel(cb.videoFormat);
@@ -92,7 +109,7 @@ int main (int argc, char* argv[])
 			}
 			
 			//Submit the samples
-			producer.submitVideoFrame(videoBuf.get(), videoBufsize);
+			producer.submitVideoFrame(videoBuf.get(), cb.calculateVideoFramesize() , cb.width, cb.height);
 			producer.submitAudioSamples(audioBuf.get(), audioBufsize);
 			frameNum++;
 			

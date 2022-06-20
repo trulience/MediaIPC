@@ -9,6 +9,8 @@
 #include <stdexcept>
 #include <stdint.h>
 #include <thread>
+#include <string>
+#include <sstream>
 using std::cin;
 using std::cout;
 using std::endl;
@@ -22,17 +24,31 @@ double sinewave(uint64_t timestep, double frequency, double sampleRate) {
 	return std::sin(2.0 * M_PI * (double)timestep * frequency / sampleRate);
 }
 
+
+struct { int x, y; } rezs[4] = {
+ 	{640,480},
+ 	{854,729},
+ 	{1024,768},
+ 	{1280,1024},
+ };
+
+int i = 0;
+
 int main (int argc, char* argv[])
 {
+	while(1) 
 	try
 	{
 		//If the user supplied a prefix string, use it instead of our default
 		std::string prefix = ((argc > 1) ? argv[1] : "TestPrefix");
-		
-		//Populate the control block to send to the consumer
+	
 		MediaIPC::ControlBlock cb;
-		cb.width = 1920;
-		cb.height = 1080;
+
+		cb.width = rezs[i].x;
+		cb.height = rezs[i].y;
+
+		i = (i + 1 ) % 4;
+
 		cb.frameRate = 30;
 		cb.videoFormat = MediaIPC::VideoFormat::RGB;
 		cb.channels = 2;
@@ -47,7 +63,7 @@ int main (int argc, char* argv[])
 		bool shouldExit = false;
 		std::thread inputThread([&shouldExit]()
 		{
-			cout << "Enter any text to exit..." << endl;
+			cout << "Enter any text to reconnect..." << endl;
 			cin.ignore();
 			shouldExit = true;
 		});

@@ -20,6 +20,7 @@ class MediaProducer : public MediaBase
 		MediaProducer& operator=(MediaProducer&& other) = default;
 		
 		void submitVideoFrame(void* buffer, uint64_t length);
+		void submitVideoFrame(void* buffer, uint64_t length, uint32_t width, uint32_t height);
 		void submitAudioSamples(void* buffer, uint64_t length);
 		void stop();
 };

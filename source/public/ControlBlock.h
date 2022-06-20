@@ -23,13 +23,18 @@ class ControlBlock
 		
 		//Determines the number of bytes required to hold the video framebuffer, based on our video parameters
 		uint64_t calculateVideoBufsize() const;
+
+		//Determines the number of bytes required to hold the video framebuffer, based on our video parameters
+		uint64_t calculateVideoFramesize() const;
 		
 		//Determines the number of bytes required to hold the audio sample buffer, based on our audio parameters
 		uint64_t calculateAudioBufsize() const;
 		
 		//Determines the interval in microseconds for sampling the video framebuffer, based on our video parameters
 		std::chrono::microseconds calculateVideoInterval() const;
-		
+
+                std::chrono::microseconds calculateVideoInterval2() const;
+
 		//Determines the interval in microseconds for sampling the audio sample buffer, based on our audio parameters
 		std::chrono::microseconds calculateAudioInterval() const;
 		
@@ -48,6 +53,12 @@ class ControlBlock
 		//The pixel format of the video
 		VideoFormat videoFormat;
 		
+		//The maximum width 
+		uint32_t maxWidth;
+
+		//The maximum height
+		uint32_t maxHeight;
+
 		
 		//---- AUDIO PARAMETERS ----
 		
@@ -63,7 +74,12 @@ class ControlBlock
 		
 		//The format of the audio samples
 		AudioFormat audioFormat;
+
+		//The timestamp of producer write
+		uint64_t mtime;	
 		
+		//The timestamp of consumer read
+		uint64_t atime;	
 		
 	private:
 		

@@ -10,6 +10,11 @@ ControlBlock::ControlBlock()
 	this->height = 0;
 	this->frameRate = 0;
 	this->videoFormat = VideoFormat::None;
+
+	this->maxWidth = 0;
+	this->maxHeight = 0;
+	this->mtime = 0;
+	this->atime = 0;
 	
 	this->channels = 0;
 	this->sampleRate = 0;
@@ -22,6 +27,20 @@ ControlBlock::ControlBlock()
 }
 
 uint64_t ControlBlock::calculateVideoBufsize() const
+{
+	if (this->videoFormat == VideoFormat::None) {
+		return 0;
+	}
+
+	// backward compatibiliy
+	if (!maxWidth  || !maxHeight) {
+		return calculateVideoFramesize();
+	}
+
+	return this->maxWidth * this->maxHeight * FormatDetails::bytesPerPixel(this->videoFormat);
+}
+
+uint64_t ControlBlock::calculateVideoFramesize() const
 {
 	if (this->videoFormat == VideoFormat::None) {
 		return 0;

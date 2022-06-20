@@ -18,6 +18,8 @@ void printControlBlock(const MediaIPC::ControlBlock& cb, std::ostream& stream)
 		stream << "height = " << cb.height << std::endl;
 		stream << "bytesPerPixel = " << (uint32_t)MediaIPC::FormatDetails::bytesPerPixel(cb.videoFormat) << std::endl;
 		stream << "frameRate = " << cb.frameRate << std::endl;
+		stream << "maxWidth = " << cb.maxWidth << std::endl;
+		stream << "maxHeight = " << cb.maxHeight << std::endl;
 	}
 	
 	//Print the audio details
@@ -30,6 +32,8 @@ void printControlBlock(const MediaIPC::ControlBlock& cb, std::ostream& stream)
 		stream << "bytesPerSample = " << (uint32_t)MediaIPC::FormatDetails::bytesPerSample(cb.audioFormat) << std::endl;
 	}
 	
+	stream << "mtime = " << cb.mtime << std::endl;
+	stream << "atime = " << cb.atime << std::endl;
 	stream << std::endl;
 }
 

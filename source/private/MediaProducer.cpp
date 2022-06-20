@@ -47,7 +47,12 @@ MediaProducer::MediaProducer(const std::string& prefix, const ControlBlock& cb)
 		this->controlBlock->active = true;
 		this->controlBlock->lastBuffer = VideoBuffer::FrontBuffer;
 		this->controlBlock->ringHead = 0;
-		
+
+		if (this->controlBlock->maxWidth == 0 || this->controlBlock->maxHeight == 0) {	
+			this->controlBlock->maxWidth = this->controlBlock->width;
+			this->controlBlock->maxHeight = this->controlBlock->height;
+		}
+
 		//Create the shared memory for the video data (ensuring the size is non-zero)
 		uint64_t videoBufsize = std::max((uint64_t)1, this->controlBlock->calculateVideoBufsize());
 		this->videoFrontBuffer = producerMemory(names.videoFrontBuffer, videoBufsize);
@@ -99,6 +104,23 @@ void MediaProducer::submitVideoFrame(void* buffer, uint64_t length)
 	{
 		MutexLock lock(*this->videoMutex->mutex);
 		this->controlBlock->lastBuffer = bufToUse;
+	}
+}
+
+static inline uint64_t RtcTimeMs()
+{
+	using namespace std::chrono;
+	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+
+void MediaProducer::submitVideoFrame(void* buffer, uint64_t length, uint32_t width, uint32_t height)
+{
+	if (width <= this->controlBlock->maxWidth && height <= this->controlBlock->maxHeight) {
+		MutexLock lock(*this->statusMutex->mutex);
+		this->controlBlock->width = width;
+		this->controlBlock->height = height;
+		this->controlBlock->mtime = RtcTimeMs();
+		submitVideoFrame(buffer, length);
 	}
 }
 

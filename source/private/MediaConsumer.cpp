@@ -5,16 +5,23 @@
 #include "RingBuffer.h"
 #include <chrono>
 #include <thread>
+#include <iostream>
 #include <utility>
 
 using std::chrono::high_resolution_clock;
 
 namespace MediaIPC {
 
+static inline uint64_t RtcTimeMs()
+{
+	using namespace std::chrono;
+	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+
 namespace
 {
 	MemoryWrapperPtr consumerMemory(const std::string& name) {
-		return MemoryUtils::toPointer(IPCUtils::getMemoryOnceExists(name, ipc::read_only));
+		return MemoryUtils::toPointer(IPCUtils::getMemoryOnceExists(name, ipc::read_write));
 	}
 	
 	MutexWrapperPtr consumerMutex(const std::string& name) {
@@ -100,6 +107,9 @@ void MediaConsumer::videoLoop()
 	high_resolution_clock::time_point lastSample = high_resolution_clock::now();
 	high_resolution_clock::time_point nextSample = lastSample;
 	
+	uint32_t width = this->controlBlock->width;
+	uint32_t height = this->controlBlock->height;
+
 	//Loop until the producer stops streaming data
 	while (this->streamIsActive() == true)
 	{
@@ -115,17 +125,34 @@ void MediaConsumer::videoLoop()
 		}
 		
 		//Sample the video framebuffer
+		size_t size = 0;
 		{
 			auto& mutex = (bufToUse == VideoBuffer::FrontBuffer) ? this->frontBufferMutex : this->backBufferMutex;
 			auto& source = (bufToUse == VideoBuffer::FrontBuffer) ? this->videoFrontBuffer : this->videoBackBuffer;
 			
 			MutexLock lock(*mutex->mutex);
-			std::memcpy(videoTempBuf.get(), source->mapped->get_address(), videoBufsize);
+			MutexLock cblock(*this->statusMutex->mutex);
+
+			if (this->controlBlock->mtime > this->controlBlock->atime) {
+				this->controlBlock->atime = RtcTimeMs();
+
+				size = this->controlBlock->calculateVideoFramesize();
+				std::memcpy(videoTempBuf.get(), source->mapped->get_address(), size);
+
+				if (width !=  this->controlBlock->width || height != this->controlBlock->height) {
+					width = this->controlBlock->width;
+					height = this->controlBlock->height;
+					//Pass a copy of the initial control block data to our delegate
+					this->delegate->controlBlockReceived(*this->controlBlock);
+				}
+			}
 		}
 		
 		//Pass the sampled data to our delegate
-		this->delegate->videoFrameReceived((const uint8_t*)(videoTempBuf.get()), videoBufsize);
-		
+		if (size) {
+			this->delegate->videoFrameReceived((const uint8_t*)(videoTempBuf.get()), size);
+		}
+
 		//Sleep until our next iteration
 		std::this_thread::sleep_until(nextSample);
 	}
