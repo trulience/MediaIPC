@@ -81,17 +81,17 @@ class ControlBlock
 		//The timestamp of consumer read
 		uint64_t atime;	
 		
+		//Is the producer currently producing data?
+		//(Access to this flag is protected by the "status" mutex)
+		//(The "status" mutex also controls the initial access to the entire control block)
+		bool active;
+		
 	private:
 		
 		//---- CONTROL FLAGS ----
 		//(These are used internally by the MediaProducer and MediaConsumer classes)
 		friend class MediaConsumer;
 		friend class MediaProducer;
-		
-		//Is the producer currently producing data?
-		//(Access to this flag is protected by the "status" mutex)
-		//(The "status" mutex also controls the initial access to the entire control block)
-		bool active;
 		
 		//Was the front framebuffer or the back framebuffer most recently updated?
 		//(Access to this flag is protected by the "video" mutex)
