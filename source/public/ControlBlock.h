@@ -86,6 +86,24 @@ class ControlBlock
 		//(The "status" mutex also controls the initial access to the entire control block)
 		bool active;
 		
+
+		uint32_t ProducerId;
+
+		struct ProducerState {
+			bool RequestPending;
+			bool ResponsePending;
+			uint32_t RequestId;
+			uint32_t ResponseId;
+		};
+
+		uint32_t ConsumerId;
+
+		struct ConsumerState {
+			bool RequestPending;
+			bool ResponsePending;
+			uint32_t ResponseId;
+		};
+
 	private:
 		
 		//---- CONTROL FLAGS ----

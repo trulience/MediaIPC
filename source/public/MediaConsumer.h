@@ -11,7 +11,7 @@ namespace MediaIPC {
 class MediaConsumer : public MediaBase
 {
 	public:
-		MediaConsumer(const std::string& prefix, std::unique_ptr<ConsumerDelegate>&& delegate);
+		MediaConsumer(const std::string& prefix, std::unique_ptr<ConsumerDelegate>&& delegate, uint32_t id=0);
 		~MediaConsumer();
 		
 		//MediaConsumer objects cannot be copied, only moved

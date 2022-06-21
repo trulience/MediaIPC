@@ -29,7 +29,7 @@ namespace
 	}
 }
 
-MediaConsumer::MediaConsumer(const std::string& prefix, std::unique_ptr<ConsumerDelegate>&& delegate)
+MediaConsumer::MediaConsumer(const std::string& prefix, std::unique_ptr<ConsumerDelegate>&& delegate, uint32_t id)
 {
 	//Take ownership of the supplied delegate
 	this->delegate = std::move(delegate);
@@ -53,6 +53,8 @@ MediaConsumer::MediaConsumer(const std::string& prefix, std::unique_ptr<Consumer
 	
 	//Point our control block pointer to the shared memory containing the data
 	this->controlBlock = (ControlBlock*)(this->controlBlockMemory->mapped->get_address());
+	
+	this->controlBlock->ConsumerId = id;
 	
 	//Wrap our ring buffer interface around the audio buffer
 	this->ringBuffer.reset(new RingBuffer(
