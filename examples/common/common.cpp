@@ -34,6 +34,8 @@ void printControlBlock(const MediaIPC::ControlBlock& cb, std::ostream& stream)
 	
 	stream << "mtime = " << cb.mtime << std::endl;
 	stream << "atime = " << cb.atime << std::endl;
+	stream << "ProducerId = " << cb.ProducerId << std::endl;
+	stream << "ConsumerId = " << cb.ConsumerId << std::endl;
 	stream << std::endl;
 }
 
