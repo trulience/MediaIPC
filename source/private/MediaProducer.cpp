@@ -116,7 +116,7 @@ void MediaProducer::submitVideoFrame(void* buffer, uint64_t length)
 
 void MediaProducer::submitVideoFrame(void* buffer, uint64_t length, uint32_t width, uint32_t height)
 {
-	if (width <= this->controlBlock->maxWidth && height <= this->controlBlock->maxHeight) {
+	if (width && height && width <= this->controlBlock->maxWidth && height <= this->controlBlock->maxHeight) {
 		MutexLock lock(*this->statusMutex->mutex);
 		this->controlBlock->width = width;
 		this->controlBlock->height = height;
