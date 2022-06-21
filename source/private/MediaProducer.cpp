@@ -139,4 +139,8 @@ void MediaProducer::stop()
 	}
 }
 
+uint32_t MediaProducer::ConsumerId() {
+	return controlBlock->ConsumerId;
+}
+
 } //End MediaIPC

@@ -23,6 +23,7 @@ class MediaProducer : public MediaBase
 		void submitVideoFrame(void* buffer, uint64_t length, uint32_t width, uint32_t height);
 		void submitAudioSamples(void* buffer, uint64_t length);
 		void stop();
+		uint32_t ConsumerId();
 };
 
 } //End MediaIPC
