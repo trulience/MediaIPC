@@ -46,7 +46,7 @@ int main (int argc, char* argv[])
 		cb.width = rezs[ind].x;
 		cb.height = rezs[ind].y;
 		cb.frameRate = 30;
-		cb.videoFormat = MediaIPC::VideoFormat::RGB;
+		cb.videoFormat = MediaIPC::VideoFormat::RGBA;
 		cb.channels = 2;
 		cb.sampleRate = 44100;
 		cb.samplesPerBuffer = 1;
@@ -99,6 +99,7 @@ int main (int argc, char* argv[])
 					videoBuf[i] = val;
 					videoBuf[i+1] = val + 50 % 255;
 					videoBuf[i+2] = val - 50 % 255;
+					videoBuf[i+3] = 0;
 				}
 			}
 			
