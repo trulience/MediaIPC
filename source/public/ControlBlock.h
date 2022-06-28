@@ -78,9 +78,6 @@ class ControlBlock
 		//The timestamp of producer write
 		uint64_t mtime;	
 		
-		//The timestamp of consumer read
-		uint64_t atime;	
-		
 		//Is the producer currently producing data?
 		//(Access to this flag is protected by the "status" mutex)
 		//(The "status" mutex also controls the initial access to the entire control block)

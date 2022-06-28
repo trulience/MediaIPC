@@ -14,7 +14,6 @@ ControlBlock::ControlBlock()
 	this->maxWidth = 0;
 	this->maxHeight = 0;
 	this->mtime = 0;
-	this->atime = 0;
 	
 	this->channels = 0;
 	this->sampleRate = 0;

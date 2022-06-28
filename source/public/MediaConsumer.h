@@ -32,6 +32,10 @@ class MediaConsumer : public MediaBase
 		void audioLoop();
 		
 		std::unique_ptr<ConsumerDelegate> delegate;
+
+		uint32_t width;
+		uint32_t height;
+		uint64_t mtime;
 };
 
 } //End MediaIPC

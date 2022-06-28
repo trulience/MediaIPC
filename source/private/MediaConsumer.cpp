@@ -69,6 +69,10 @@ MediaConsumer::MediaConsumer(const std::string& prefix, std::unique_ptr<Consumer
 		MutexLock lock(*this->statusMutex->mutex);
 		std::memcpy(&cbTemp, this->controlBlock, sizeof(ControlBlock));
 	}
+	this->width = cbTemp.width;
+	this->height = cbTemp.height;
+	this->mtime = cbTemp.mtime;
+
 	this->delegate->controlBlockReceived(cbTemp);
 	
 	//Start our sampling loops
@@ -87,6 +91,11 @@ bool MediaConsumer::streamIsActive()
 	{
 		MutexLock lock(*this->statusMutex->mutex);
 		std::memcpy(&active, &(this->controlBlock->active), sizeof(bool));
+		if (active) {
+			std::memcpy(&width, &(this->controlBlock->width), sizeof(uint32_t));
+			std::memcpy(&height, &(this->controlBlock->height), sizeof(uint32_t));
+			std::memcpy(&mtime, &(this->controlBlock->mtime), sizeof(uint64_t));
+		}
 	}
 	return active;
 }
@@ -111,6 +120,7 @@ void MediaConsumer::videoLoop()
 	
 	uint32_t width = this->controlBlock->width;
 	uint32_t height = this->controlBlock->height;
+	uint64_t atime = 0;
 
 	//Loop until the producer stops streaming data
 	while (this->streamIsActive() == true)
@@ -128,26 +138,22 @@ void MediaConsumer::videoLoop()
 		
 		//Sample the video framebuffer
 		size_t size = 0;
-		{
+		if (this->mtime > atime) {
 			auto& mutex = (bufToUse == VideoBuffer::FrontBuffer) ? this->frontBufferMutex : this->backBufferMutex;
 			auto& source = (bufToUse == VideoBuffer::FrontBuffer) ? this->videoFrontBuffer : this->videoBackBuffer;
 			
 			MutexLock lock(*mutex->mutex);
-			MutexLock cblock(*this->statusMutex->mutex);
 
-			if (this->controlBlock->mtime > this->controlBlock->atime) {
-				this->controlBlock->atime = RtcTimeMs();
+			size = this->controlBlock->calculateVideoFramesize();
+			std::memcpy(videoTempBuf.get(), source->mapped->get_address(), size);
 
-				size = this->controlBlock->calculateVideoFramesize();
-				std::memcpy(videoTempBuf.get(), source->mapped->get_address(), size);
-
-				if (width !=  this->controlBlock->width || height != this->controlBlock->height) {
-					width = this->controlBlock->width;
-					height = this->controlBlock->height;
-					//Pass a copy of the initial control block data to our delegate
-					this->delegate->controlBlockReceived(*this->controlBlock);
-				}
+			if (width !=  this->width || height != this->height) {
+				width = this->width;
+				height = this->height;
+				//Pass a copy of the initial control block data to our delegate
+				this->delegate->controlBlockReceived(*this->controlBlock);
 			}
+			atime = this->mtime;
 		}
 		
 		//Pass the sampled data to our delegate
