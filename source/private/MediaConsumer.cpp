@@ -117,7 +117,7 @@ void MediaConsumer::videoLoop()
 	auto samplingFrequency = this->controlBlock->calculateVideoInterval();
 
 	// VPS 
-	if (this->controlBlock->ConsumerId == VPS_CONSUMER_ID) {
+	if (/*this->controlBlock->ConsumerId == VPS_CONSUMER_ID*/true) {
 		samplingFrequency  = samplingFrequency / 3;
 	}
 	
@@ -205,7 +205,7 @@ void MediaConsumer::audioLoop()
 		//Determine the time point for the next sampling iteration
 		lastSample = nextSample;
 
-		if (this->controlBlock->ConsumerId == VPS_CONSUMER_ID) {
+		if (/*this->controlBlock->ConsumerId == VPS_CONSUMER_ID*/ true) {
 			nextSample = lastSample + std::chrono::microseconds(5000);
 
 			//============= our changes ======================
