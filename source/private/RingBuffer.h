@@ -11,6 +11,7 @@ class RingBuffer
 		RingBuffer(uint8_t* buffer, uint32_t size, uint32_t* head);
 		
 		void read(void* destination, uint32_t bytesToRead);
+		void readAt(void* destination, const uint32_t& location, const uint32_t& size);
 		void write(void* source, uint32_t bytesToWrite);
 		
 	private:

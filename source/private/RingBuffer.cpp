@@ -12,6 +12,15 @@ RingBuffer::RingBuffer(uint8_t* buffer, uint32_t size, uint32_t* head)
 	this->head = head;
 }
 
+void RingBuffer::readAt(void* destination, const uint32_t& location, const uint32_t& size){
+	
+  uint32_t currOffset = *this->head;
+  uint8_t* dest = (uint8_t*)destination;
+  
+  std::memcpy(dest, this->buffer + currOffset+location, size);
+	
+}
+
 void RingBuffer::read(void* destination, uint32_t bytesToRead)
 {
 	uint32_t currOffset = *this->head;

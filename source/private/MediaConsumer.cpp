@@ -100,6 +100,8 @@ bool MediaConsumer::streamIsActive()
 	return active;
 }
 
+#define VPS_CONSUMER_ID 2
+
 void MediaConsumer::videoLoop()
 {
 	//Don't bother sampling anything if no video data is being transmitted
@@ -113,6 +115,11 @@ void MediaConsumer::videoLoop()
 	
 	//Determine our sampling frequency
 	auto samplingFrequency = this->controlBlock->calculateVideoInterval();
+
+	// VPS 
+	if (this->controlBlock->ConsumerId == VPS_CONSUMER_ID) {
+		samplingFrequency  = samplingFrequency / 3;
+	}
 	
 	//Determine our starting time
 	high_resolution_clock::time_point lastSample = high_resolution_clock::now();
@@ -121,6 +128,7 @@ void MediaConsumer::videoLoop()
 	uint32_t width = this->controlBlock->width;
 	uint32_t height = this->controlBlock->height;
 	uint64_t atime = 0;
+	VideoBuffer lastUsedBuffer = VideoBuffer::FrontBuffer;
 
 	//Loop until the producer stops streaming data
 	while (this->streamIsActive() == true)
@@ -138,7 +146,7 @@ void MediaConsumer::videoLoop()
 		
 		//Sample the video framebuffer
 		size_t size = 0;
-		if (this->mtime > atime) {
+		if (this->mtime > atime || lastUsedBuffer != bufToUse) {
 			auto& mutex = (bufToUse == VideoBuffer::FrontBuffer) ? this->frontBufferMutex : this->backBufferMutex;
 			auto& source = (bufToUse == VideoBuffer::FrontBuffer) ? this->videoFrontBuffer : this->videoBackBuffer;
 			
@@ -160,6 +168,8 @@ void MediaConsumer::videoLoop()
 		if (size) {
 			this->delegate->videoFrameReceived((const uint8_t*)(videoTempBuf.get()), size);
 		}
+
+		lastUsedBuffer = bufToUse;
 
 		//Sleep until our next iteration
 		std::this_thread::sleep_until(nextSample);
@@ -183,23 +193,57 @@ void MediaConsumer::audioLoop()
 	//Determine our starting time
 	high_resolution_clock::time_point lastSample = high_resolution_clock::now();
 	high_resolution_clock::time_point nextSample = lastSample;
-	
+
+
+	float localFlag=0;
+	bool isBufferChanged=false;
+
+
 	//Loop until the producer stops streaming data
 	while (this->streamIsActive() == true)
 	{
 		//Determine the time point for the next sampling iteration
 		lastSample = nextSample;
-		nextSample = lastSample + samplingFrequency;
-		
-		//Sample the audio buffer
-		{
-			MutexLock lock(*this->audioMutex->mutex);
-			this->ringBuffer->read(audioTempBuf.get(), audioBufsize);
-		}
-		
-		//Pass the sampled data to our delegate
-		this->delegate->audioSamplesReceived((const uint8_t*)(audioTempBuf.get()), audioBufsize);
-		
+
+		if (this->controlBlock->ConsumerId == VPS_CONSUMER_ID) {
+			nextSample = lastSample + std::chrono::microseconds(5000);
+
+			//============= our changes ======================
+			//our flag is at the 6th channel
+			uint8_t flagPosition=5*sizeof(float);	
+			float globalFlag=0;
+			//Sample the audio buffer
+			{
+				MutexLock lock(*this->audioMutex->mutex);
+
+				this->ringBuffer->readAt(&globalFlag, flagPosition, sizeof(float));
+
+				isBufferChanged=false;
+				if((int)globalFlag!=(int)localFlag) {
+
+					this->ringBuffer->read(audioTempBuf.get(), audioBufsize);
+					isBufferChanged=true;
+				}
+
+				localFlag=globalFlag;
+			}
+
+			//Pass the sampled data to our delegate
+			if(isBufferChanged==true)
+				this->delegate->audioSamplesReceived((const uint8_t*)(audioTempBuf.get()), audioBufsize);
+
+		} else {
+			nextSample = lastSample + samplingFrequency;
+
+			//Sample the audio buffer
+			{
+				MutexLock lock(*this->audioMutex->mutex);
+				this->ringBuffer->read(audioTempBuf.get(), audioBufsize);
+			}
+
+			//Pass the sampled data to our delegate
+			this->delegate->audioSamplesReceived((const uint8_t*)(audioTempBuf.get()), audioBufsize);
+		}	
 		//Sleep until our next iteration
 		std::this_thread::sleep_until(nextSample);
 	}
