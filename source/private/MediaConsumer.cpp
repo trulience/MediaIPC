@@ -12,12 +12,6 @@ using std::chrono::high_resolution_clock;
 
 namespace MediaIPC {
 
-static inline uint64_t RtcTimeMs()
-{
-	using namespace std::chrono;
-	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-}
-
 namespace
 {
 	MemoryWrapperPtr consumerMemory(const std::string& name) {
@@ -179,9 +173,6 @@ void MediaConsumer::audioLoop()
 	//Allocate memory to hold the last sampled audio samples
 	uint32_t audioBufsize = this->audioBuffer->mapped->get_size();
 	std::unique_ptr<uint8_t[]> audioTempBuf(new uint8_t[audioBufsize]);
-	
-	//Determine our sampling frequency
-	auto samplingFrequency = this->controlBlock->calculateAudioInterval();
 	
 	//Determine our starting time
 	high_resolution_clock::time_point lastSample = high_resolution_clock::now();
